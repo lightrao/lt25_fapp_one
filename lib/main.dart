@@ -1,7 +1,7 @@
-import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter/material.dart';
+import 'package:do_not_disturb/do_not_disturb.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -11,19 +11,17 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool isBackgroundEnabled = false;
+  final _dndPlugin = DoNotDisturbPlugin();
+  bool _isDndEnabled = false;
+  String _status = 'Unknown';
 
-  Future<void> _toggleBackground() async {
-    await BackgroundService.initialize();
-    final success = await BackgroundService.toggleBackground();
-    if (!success) {
-      print('Failed to toggle background execution.');
-      return;
-    }
-    // Update the state using the current value.
+  Future<void> _checkStatus() async {
+    final bool enabled = await _dndPlugin.isDndEnabled();
+    final InterruptionFilter filter = await _dndPlugin.getDNDStatus();
+
     setState(() {
-      isBackgroundEnabled = FlutterBackground.isBackgroundExecutionEnabled;
-      print('Background execution: $isBackgroundEnabled');
+      _isDndEnabled = enabled;
+      _status = filter.toString().split('.').last;
     });
   }
 
@@ -31,39 +29,41 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        appBar: AppBar(title: const Text('DND Demo')),
         body: Center(
-          child: ElevatedButton(
-            onPressed: _toggleBackground,
-            child: Text(
-                isBackgroundEnabled ? 'Stop Background' : 'Start Background'),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: _checkStatus,
+                child: const Text('Check DND Status'),
+              ),
+              const SizedBox(height: 20),
+              Text('DND Enabled: $_isDndEnabled'),
+              Text('Current Status: $_status'),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => _dndPlugin.openDndSettings(),
+                child: const Text('Open DND Settings'),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  if (await _dndPlugin.isNotificationPolicyAccessGranted()) {
+                    await _dndPlugin.setInterruptionFilter(_isDndEnabled
+                        ? InterruptionFilter.all
+                        : InterruptionFilter.none);
+                    _checkStatus();
+                  } else {
+                    await _dndPlugin.openNotificationPolicyAccessSettings();
+                  }
+                },
+                child: const Text('Toggle DND'),
+              )
+            ],
           ),
         ),
       ),
     );
-  }
-}
-
-class BackgroundService {
-  static final androidConfig = FlutterBackgroundAndroidConfig(
-    notificationTitle: "Background Service",
-    notificationText: "Running in background",
-    notificationImportance: AndroidNotificationImportance.high,
-    notificationIcon: AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
-  );
-
-  static Future<bool> initialize() async {
-    return await FlutterBackground.initialize(androidConfig: androidConfig);
-  }
-
-  static Future<bool> toggleBackground() async {
-    if (await FlutterBackground.hasPermissions) {
-      if (FlutterBackground.isBackgroundExecutionEnabled) {
-        return await FlutterBackground.disableBackgroundExecution();
-      } else {
-        // Enable background execution.
-        return await FlutterBackground.enableBackgroundExecution();
-      }
-    }
-    return false;
   }
 }
