@@ -1,59 +1,69 @@
+import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter/material.dart';
-import 'package:awesome_notifications/awesome_notifications.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() => runApp(MyApp());
 
-  await AwesomeNotifications().initialize(
-    null, // default icon
-    [
-      NotificationChannel(
-        channelKey: 'basic_channel',
-        channelName: 'Basic Notifications',
-        channelDescription: 'Notification channel for basic tests',
-        importance: NotificationImportance.High,
-        defaultColor: Colors.blue,
-        ledColor: Colors.white,
-      )
-    ],
-  );
-
-  requestPermission();
-
-  runApp(const MyApp());
-}
-
-void requestPermission() async {
-  bool isAllowed = await AwesomeNotifications().isNotificationAllowed();
-  if (!isAllowed) {
-    await AwesomeNotifications().requestPermissionToSendNotifications();
-  }
-}
-
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isBackgroundEnabled = false;
+
+  Future<void> _toggleBackground() async {
+    await BackgroundService.initialize();
+    final success = await BackgroundService.toggleBackground();
+    if (!success) {
+      print('Failed to toggle background execution.');
+      return;
+    }
+    // Update the state using the current value.
+    setState(() {
+      isBackgroundEnabled = FlutterBackground.isBackgroundExecutionEnabled;
+      print('Background execution: $isBackgroundEnabled');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('Notification Demo')),
         body: Center(
           child: ElevatedButton(
-            child: const Text('Show Notification'),
-            onPressed: () async {
-              await AwesomeNotifications().createNotification(
-                content: NotificationContent(
-                  id: 1,
-                  channelKey: 'basic_channel',
-                  title: 'Hello World!',
-                  body: 'This is your first notification',
-                ),
-              );
-            },
+            onPressed: _toggleBackground,
+            child: Text(
+                isBackgroundEnabled ? 'Stop Background' : 'Start Background'),
           ),
         ),
       ),
     );
+  }
+}
+
+class BackgroundService {
+  static final androidConfig = FlutterBackgroundAndroidConfig(
+    notificationTitle: "Background Service",
+    notificationText: "Running in background",
+    notificationImportance: AndroidNotificationImportance.high,
+    notificationIcon: AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
+  );
+
+  static Future<bool> initialize() async {
+    return await FlutterBackground.initialize(androidConfig: androidConfig);
+  }
+
+  static Future<bool> toggleBackground() async {
+    if (await FlutterBackground.hasPermissions) {
+      if (FlutterBackground.isBackgroundExecutionEnabled) {
+        return await FlutterBackground.disableBackgroundExecution();
+      } else {
+        // Enable background execution.
+        return await FlutterBackground.enableBackgroundExecution();
+      }
+    }
+    return false;
   }
 }
