@@ -1,15 +1,11 @@
 // main.dart
 import 'package:flutter/material.dart';
-import 'service_locator.dart';
-import 'package:get_it/get_it.dart';
-import 'my_service.dart';
+import 'locator.dart'; // Import your locator setup
+import 'my_home_page.dart'; // Import your MyHomePage widget
 
 void main() {
-  // Initialize and register all your services.
-  setupLocator();
-
-  // Run your app.
-  runApp(MyApp());
+  setupLocator(); // Set up the central kitchen before the restaurant opens!
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -18,27 +14,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'get_it Example',
-      home: HomeScreen(),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  // Retrieve an instance of MyService using get_it.
-  final MyService myService = GetIt.instance<MyService>();
-
-  HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('get_it Example'),
+      title: 'GetIt Example',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
-      body: Center(
-        child: Text(myService.getGreeting()),
-      ),
+      home: const MyHomePage(title: 'GetIt Counter App'),
     );
   }
 }
