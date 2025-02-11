@@ -1,82 +1,82 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:volume_controller/volume_controller.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const WakelockPlusExampleApp());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+/// Example app widget demonstrating how to use the wakelock plugin.
+///
+/// The example implementation is located inside [OutlinedButton.onPressed]
+/// callback functions and a [FutureBuilder].
+class WakelockPlusExampleApp extends StatefulWidget {
+  const WakelockPlusExampleApp({super.key});
+
+  /// Creates the [WakelockPlusExampleApp] widget.
+
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<WakelockPlusExampleApp> createState() => _WakelockPlusExampleAppState();
 }
 
-class _MyAppState extends State<MyApp> {
-  // Hold the current volume value (range 0.0 to 1.0)
-  double _currentVolume = 0.5;
-  late final VolumeController _volumeController;
-  late final StreamSubscription<double> _volumeSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    // Get the singleton instance
-    _volumeController = VolumeController.instance;
-
-    // Set up the listener that updates volume changes from the system
-    _volumeSubscription = _volumeController.addListener((volume) {
-      setState(() => _currentVolume = volume);
-    },
-        fetchInitialVolume:
-            true); // fetchInitialVolume gets the current volume immediately
-
-    // Optional: Initialize volume if you want to start with a specific level
-    _volumeController.setVolume(_currentVolume);
-  }
-
-  @override
-  void dispose() {
-    _volumeSubscription.cancel();
-    super.dispose();
-  }
-
+class _WakelockPlusExampleAppState extends State<WakelockPlusExampleApp> {
   @override
   Widget build(BuildContext context) {
-    // The UI shows a slider representing the current volume,
-    // much like the faucet handle controlling the water flow.
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Volume Controller Example'),
+          title: const Text('Wakelock example app'),
         ),
         body: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Current Volume: ${(_currentVolume * 100).round()}%'),
-              const SizedBox(height: 20),
-              Slider(
-                value: _currentVolume,
-                min: 0,
-                max: 1,
-                divisions: 100,
-                label: (_currentVolume * 100).round().toString(),
-                onChanged: (double value) async {
-                  // When you slide, it sets the system volume,
-                  // like turning the faucet handle to adjust water flow.
-                  setState(() => _currentVolume = value);
-                  await _volumeController.setVolume(value);
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              const Spacer(
+                flex: 3,
+              ),
+              OutlinedButton(
+                onPressed: () {
+                  // The following code will enable the wakelock on the device
+                  // using the wakelock plugin.
+                  setState(() {
+                    WakelockPlus.enable();
+                    // You could also use Wakelock.toggle(on: true);
+                  });
+                },
+                child: const Text('enable wakelock'),
+              ),
+              const Spacer(),
+              OutlinedButton(
+                onPressed: () {
+                  // The following code will disable the wakelock on the device
+                  // using the wakelock plugin.
+                  setState(() {
+                    WakelockPlus.disable();
+                    // You could also use Wakelock.toggle(on: false);
+                  });
+                },
+                child: const Text('disable wakelock'),
+              ),
+              const Spacer(
+                flex: 2,
+              ),
+              FutureBuilder(
+                future: WakelockPlus.enabled,
+                builder: (context, AsyncSnapshot<bool> snapshot) {
+                  final data = snapshot.data;
+                  // The use of FutureBuilder is necessary here to await the
+                  // bool value from the `enabled` getter.
+                  if (data == null) {
+                    // The Future is retrieved so fast that you will not be able
+                    // to see any loading indicator.
+                    return Container();
+                  }
+
+                  return Text('The wakelock is currently '
+                      '${data ? 'enabled' : 'disabled'}.');
                 },
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  // Toggle mute: if volume is > 0 then mute, else restore volume
-                  bool isMuted = await _volumeController.isMuted();
-                  await _volumeController.setMute(!isMuted);
-                },
-                child: const Text('Toggle Mute'),
+              const Spacer(
+                flex: 3,
               ),
             ],
           ),
