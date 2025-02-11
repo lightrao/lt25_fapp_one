@@ -1,95 +1,95 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-// ignore_for_file: public_member_api_docs
-
-import 'dart:async';
-
+// main.dart
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'event_bus_instance.dart';
+import 'counter_event.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PackageInfoPlus Demo',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0x9f4376f8),
-      ),
-      home: const MyHomePage(),
+      title: 'Event Bus Example',
+      home: CounterHomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
-
+class CounterHomePage extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _CounterHomePageState createState() => _CounterHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  PackageInfo _packageInfo = PackageInfo(
-    appName: 'Unknown',
-    packageName: 'Unknown',
-    version: 'Unknown',
-    buildNumber: 'Unknown',
-    buildSignature: 'Unknown',
-    installerStore: 'Unknown',
-  );
+class _CounterHomePageState extends State<CounterHomePage> {
+  int _counterPublisher = 0;
+  int _counterSubscriber = 0;
+  late var _subscription;
 
   @override
   void initState() {
     super.initState();
-    _initPackageInfo();
-  }
 
-  Future<void> _initPackageInfo() async {
-    final info = await PackageInfo.fromPlatform();
-    setState(() {
-      _packageInfo = info;
+    // Subscribe to events posted on the global event bus.
+    _subscription = eventBus.on<CounterEvent>().listen((event) {
+      // Update UI when a new event is received.
+      setState(() {
+        _counterSubscriber = event.count;
+      });
     });
   }
 
-  Widget _infoTile(String title, String subtitle) {
-    return ListTile(
-      title: Text(title),
-      subtitle: Text(subtitle.isEmpty ? 'Not set' : subtitle),
-    );
+  @override
+  void dispose() {
+    // Cancel the subscription when no longer needed to avoid memory leaks.
+    _subscription.cancel();
+    super.dispose();
+  }
+
+  // A method to "post" (publish) an event on the event bus.
+  void _incrementCounter() {
+    setState(() {
+      _counterPublisher++;
+    });
+    // Publish a new event with the updated counter.
+    eventBus.fire(CounterEvent(_counterPublisher));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PackageInfoPlus example'),
-        elevation: 4, // 4 means a single shadow
+        title: Text('Event Bus Example'),
       ),
-      body: ListView(
-        children: <Widget>[
-          _infoTile('App name', _packageInfo.appName),
-          _infoTile('Package name', _packageInfo.packageName),
-          _infoTile('App version', _packageInfo.version),
-          _infoTile('Build number', _packageInfo.buildNumber),
-          _infoTile('Build signature', _packageInfo.buildSignature),
-          _infoTile(
-            'Installer store',
-            _packageInfo.installerStore ?? 'not available',
-          ),
-          _infoTile(
-            'Install time',
-            _packageInfo.installTime?.toIso8601String() ??
-                'Install time not available',
-          ),
-        ],
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              'Publisher Counter:',
+              style: TextStyle(fontSize: 20),
+            ),
+            Text(
+              '$_counterPublisher',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            SizedBox(height: 30),
+            Text(
+              'Subscriber Counter:',
+              style: TextStyle(fontSize: 20),
+            ),
+            Text(
+              '$_counterSubscriber',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: Icon(Icons.add),
       ),
     );
   }
