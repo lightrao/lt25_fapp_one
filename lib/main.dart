@@ -1,24 +1,29 @@
-// main.dart
-import 'package:flutter/material.dart';
-import 'locator.dart'; // Import your locator setup
-import 'my_home_page.dart'; // Import your MyHomePage widget
+import 'package:logger/logger.dart';
+
+var logger = Logger(
+  printer: PrettyPrinter(),
+);
+
+var loggerNoStack = Logger(
+  printer: PrettyPrinter(methodCount: 0),
+);
 
 void main() {
-  setupLocator(); // Set up the central kitchen before the restaurant opens!
-  runApp(const MyApp());
+  print(
+      'Run with either `dart example/main.dart` or `dart --enable-asserts example/main.dart`.');
+  demo();
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+void demo() {
+  logger.d('Log message with 2 methods');
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GetIt Example',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'GetIt Counter App'),
-    );
-  }
+  loggerNoStack.i('Info message');
+
+  loggerNoStack.w('Just a warning!');
+
+  logger.e('Error! Something bad happened', error: 'Test Error');
+
+  loggerNoStack.t({'key': 5, 'value': 'something'});
+
+  Logger(printer: SimplePrinter(colors: true)).t('boom');
 }
