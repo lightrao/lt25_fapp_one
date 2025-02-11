@@ -1,86 +1,95 @@
+// Copyright 2017 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// ignore_for_file: public_member_api_docs
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 void main() {
-  runApp(const WakelockPlusExampleApp());
+  runApp(const MyApp());
 }
 
-/// Example app widget demonstrating how to use the wakelock plugin.
-///
-/// The example implementation is located inside [OutlinedButton.onPressed]
-/// callback functions and a [FutureBuilder].
-class WakelockPlusExampleApp extends StatefulWidget {
-  const WakelockPlusExampleApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-  /// Creates the [WakelockPlusExampleApp] widget.
-
-  @override
-  State<WakelockPlusExampleApp> createState() => _WakelockPlusExampleAppState();
-}
-
-class _WakelockPlusExampleAppState extends State<WakelockPlusExampleApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Wakelock example app'),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              const Spacer(
-                flex: 3,
-              ),
-              OutlinedButton(
-                onPressed: () {
-                  // The following code will enable the wakelock on the device
-                  // using the wakelock plugin.
-                  setState(() {
-                    WakelockPlus.enable();
-                    // You could also use Wakelock.toggle(on: true);
-                  });
-                },
-                child: const Text('enable wakelock'),
-              ),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: () {
-                  // The following code will disable the wakelock on the device
-                  // using the wakelock plugin.
-                  setState(() {
-                    WakelockPlus.disable();
-                    // You could also use Wakelock.toggle(on: false);
-                  });
-                },
-                child: const Text('disable wakelock'),
-              ),
-              const Spacer(
-                flex: 2,
-              ),
-              FutureBuilder(
-                future: WakelockPlus.enabled,
-                builder: (context, AsyncSnapshot<bool> snapshot) {
-                  final data = snapshot.data;
-                  // The use of FutureBuilder is necessary here to await the
-                  // bool value from the `enabled` getter.
-                  if (data == null) {
-                    // The Future is retrieved so fast that you will not be able
-                    // to see any loading indicator.
-                    return Container();
-                  }
+      title: 'PackageInfoPlus Demo',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: const Color(0x9f4376f8),
+      ),
+      home: const MyHomePage(),
+    );
+  }
+}
 
-                  return Text('The wakelock is currently '
-                      '${data ? 'enabled' : 'disabled'}.');
-                },
-              ),
-              const Spacer(
-                flex: 3,
-              ),
-            ],
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  PackageInfo _packageInfo = PackageInfo(
+    appName: 'Unknown',
+    packageName: 'Unknown',
+    version: 'Unknown',
+    buildNumber: 'Unknown',
+    buildSignature: 'Unknown',
+    installerStore: 'Unknown',
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _initPackageInfo();
+  }
+
+  Future<void> _initPackageInfo() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      _packageInfo = info;
+    });
+  }
+
+  Widget _infoTile(String title, String subtitle) {
+    return ListTile(
+      title: Text(title),
+      subtitle: Text(subtitle.isEmpty ? 'Not set' : subtitle),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('PackageInfoPlus example'),
+        elevation: 4, // 4 means a single shadow
+      ),
+      body: ListView(
+        children: <Widget>[
+          _infoTile('App name', _packageInfo.appName),
+          _infoTile('Package name', _packageInfo.packageName),
+          _infoTile('App version', _packageInfo.version),
+          _infoTile('Build number', _packageInfo.buildNumber),
+          _infoTile('Build signature', _packageInfo.buildSignature),
+          _infoTile(
+            'Installer store',
+            _packageInfo.installerStore ?? 'not available',
           ),
-        ),
+          _infoTile(
+            'Install time',
+            _packageInfo.installTime?.toIso8601String() ??
+                'Install time not available',
+          ),
+        ],
       ),
     );
   }
