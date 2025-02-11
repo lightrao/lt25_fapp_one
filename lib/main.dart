@@ -1,79 +1,86 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:volume_controller/volume_controller.dart';
 
-void main() async {
-  // Ensure Flutter bindings are initialized before using async code.
-  WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  runApp(MyApp(prefs: prefs));
+void main() {
+  runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  final SharedPreferences prefs;
-  const MyApp({super.key, required this.prefs});
-
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SharedPreferences Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: MyHomePage(prefs: prefs),
-    );
-  }
+  State<MyApp> createState() => _MyAppState();
 }
 
-class MyHomePage extends StatefulWidget {
-  final SharedPreferences prefs;
-  const MyHomePage({Key? key, required this.prefs}) : super(key: key);
-
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _MyAppState extends State<MyApp> {
+  // Hold the current volume value (range 0.0 to 1.0)
+  double _currentVolume = 0.5;
+  late final VolumeController _volumeController;
+  late final StreamSubscription<double> _volumeSubscription;
 
   @override
   void initState() {
     super.initState();
-    _loadCounter();
+    // Get the singleton instance
+    _volumeController = VolumeController.instance;
+
+    // Set up the listener that updates volume changes from the system
+    _volumeSubscription = _volumeController.addListener((volume) {
+      setState(() => _currentVolume = volume);
+    },
+        fetchInitialVolume:
+            true); // fetchInitialVolume gets the current volume immediately
+
+    // Optional: Initialize volume if you want to start with a specific level
+    _volumeController.setVolume(_currentVolume);
   }
 
-  // Read the counter value from shared preferences.
-  void _loadCounter() {
-    setState(() {
-      _counter = widget.prefs.getInt('counter') ?? 0;
-    });
-  }
-
-  // Increment the counter and save the new value.
-  Future<void> _incrementCounter() async {
-    setState(() {
-      _counter++;
-    });
-    await widget.prefs.setInt('counter', _counter);
+  @override
+  void dispose() {
+    _volumeSubscription.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("SharedPreferences Demo"),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text('$_counter',
-                style: Theme.of(context).textTheme.headlineMedium),
-          ],
+    // The UI shows a slider representing the current volume,
+    // much like the faucet handle controlling the water flow.
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Volume Controller Example'),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Current Volume: ${(_currentVolume * 100).round()}%'),
+              const SizedBox(height: 20),
+              Slider(
+                value: _currentVolume,
+                min: 0,
+                max: 1,
+                divisions: 100,
+                label: (_currentVolume * 100).round().toString(),
+                onChanged: (double value) async {
+                  // When you slide, it sets the system volume,
+                  // like turning the faucet handle to adjust water flow.
+                  setState(() => _currentVolume = value);
+                  await _volumeController.setVolume(value);
+                },
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  // Toggle mute: if volume is > 0 then mute, else restore volume
+                  bool isMuted = await _volumeController.isMuted();
+                  await _volumeController.setMute(!isMuted);
+                },
+                child: const Text('Toggle Mute'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
