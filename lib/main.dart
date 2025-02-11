@@ -1,29 +1,80 @@
-import 'package:logger/logger.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-var logger = Logger(
-  printer: PrettyPrinter(),
-);
-
-var loggerNoStack = Logger(
-  printer: PrettyPrinter(methodCount: 0),
-);
-
-void main() {
-  print(
-      'Run with either `dart example/main.dart` or `dart --enable-asserts example/main.dart`.');
-  demo();
+void main() async {
+  // Ensure Flutter bindings are initialized before using async code.
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  runApp(MyApp(prefs: prefs));
 }
 
-void demo() {
-  logger.d('Log message with 2 methods');
+class MyApp extends StatelessWidget {
+  final SharedPreferences prefs;
+  const MyApp({super.key, required this.prefs});
 
-  loggerNoStack.i('Info message');
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'SharedPreferences Demo',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: MyHomePage(prefs: prefs),
+    );
+  }
+}
 
-  loggerNoStack.w('Just a warning!');
+class MyHomePage extends StatefulWidget {
+  final SharedPreferences prefs;
+  const MyHomePage({Key? key, required this.prefs}) : super(key: key);
 
-  logger.e('Error! Something bad happened', error: 'Test Error');
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
 
-  loggerNoStack.t({'key': 5, 'value': 'something'});
+class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
 
-  Logger(printer: SimplePrinter(colors: true)).t('boom');
+  @override
+  void initState() {
+    super.initState();
+    _loadCounter();
+  }
+
+  // Read the counter value from shared preferences.
+  void _loadCounter() {
+    setState(() {
+      _counter = widget.prefs.getInt('counter') ?? 0;
+    });
+  }
+
+  // Increment the counter and save the new value.
+  Future<void> _incrementCounter() async {
+    setState(() {
+      _counter++;
+    });
+    await widget.prefs.setInt('counter', _counter);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("SharedPreferences Demo"),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text('You have pushed the button this many times:'),
+            Text('$_counter',
+                style: Theme.of(context).textTheme.headlineMedium),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
 }
