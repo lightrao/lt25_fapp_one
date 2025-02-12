@@ -46,6 +46,7 @@ dependencies:
   wakelock_plus: ^1.2.10
   package_info_plus: ^8.2.1
   event_bus: ^2.0.1
+  app_settings: ^5.2.0
 
 dev_dependencies:
   flutter_test:
