@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
 void main() {
+  // Set a default locale (optional – you can also let the system locale decide)
+  Intl.defaultLocale = 'en_US';
   runApp(const MyApp());
 }
 
@@ -11,63 +13,53 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'fl_chart Example',
-      home: const ChartPage(),
+      title: 'Intl Demo',
+      home: const HomePage(),
     );
   }
 }
 
-class ChartPage extends StatelessWidget {
-  const ChartPage({super.key});
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Example 1: Format the current date.
+    DateTime now = DateTime.now();
+    String formattedDate = DateFormat.yMMMMd().format(now);
+    // Think of it as our chef preparing today’s date in the local style.
+
+    // Example 2: Format a number as currency.
+    double amount = 1234567.89;
+    String formattedCurrency =
+        NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(amount);
+    // Here, our chef dresses up the number in a “currency costume.”
+
+    // Example 3: Use a localizable message.
+    // In a real app, you’d extract messages using intl tools.
+    String greeting = Intl.message(
+      'Hello, World!',
+      name: 'greeting',
+      desc: 'Simple greeting message',
+    );
+    // Our chef even serves up a friendly greeting!
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Line Chart Example'),
+        title: const Text('Intl Package Demo'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(30.0),
-        child: LineChart(
-          LineChartData(
-            // Draw grid lines on the chart for a nice background effect.
-            gridData: FlGridData(show: true),
-            // Display axis titles (numbers) on the left and bottom.
-            titlesData: FlTitlesData(
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: true),
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: true),
-              ),
-            ),
-            // Add a border around the chart.
-            borderData: FlBorderData(
-              show: true,
-              border: Border.all(color: Colors.blue),
-            ),
-            // Define the data and appearance of the line.
-            lineBarsData: [
-              LineChartBarData(
-                spots: const [
-                  FlSpot(0, 1),
-                  FlSpot(1, 3),
-                  FlSpot(2, 7),
-                  FlSpot(3, 6),
-                  FlSpot(4, 8),
-                ],
-                isCurved: true, // Makes the line smooth.
-                barWidth: 4, // Thickness of the line.
-                color: Colors.blue, // Color of the line.
-                dotData: FlDotData(show: true), // Show dots on data points.
-                belowBarData: BarAreaData(
-                  show: true,
-                  color: Colors.blue
-                      .withOpacity(0.3), // Fills the area under the line.
-                ),
-              ),
-            ],
-          ),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text('Current date: $formattedDate',
+                style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 16),
+            Text('Formatted amount: $formattedCurrency',
+                style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 16),
+            Text(greeting, style: const TextStyle(fontSize: 20)),
+          ],
         ),
       ),
     );
