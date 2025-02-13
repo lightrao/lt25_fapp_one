@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -9,61 +11,63 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: Text('Treasure Map Chart')),
-        body: TreasureChart(),
-      ),
+      title: 'fl_chart Example',
+      home: const ChartPage(),
     );
   }
 }
 
-class TreasureChart extends StatelessWidget {
-  // Our treasure spots (data points)
-  final List<FlSpot> buriedTreasures = [
-    FlSpot(1, 3), // Month 1: 3 gold coins
-    FlSpot(2, 1), // Month 2: 1 gold coin
-    FlSpot(3, 4), // Month 3: 4 gold coins
-    FlSpot(4, 2), // Month 4: 2 gold coins
-    FlSpot(5, 5), // Month 5: 5 gold coins
-  ];
+class ChartPage extends StatelessWidget {
+  const ChartPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      height: 300,
-      child: LineChart(
-        LineChartData(
-          // X Axis (Time Road)
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) =>
-                    Text('Month ${value.toInt()}'),
-                interval: 1,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Line Chart Example'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: LineChart(
+          LineChartData(
+            // Draw grid lines on the chart for a nice background effect.
+            gridData: FlGridData(show: true),
+            // Display axis titles (numbers) on the left and bottom.
+            titlesData: FlTitlesData(
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: true),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: true),
               ),
             ),
-            // Y Axis (Gold Coast)
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) => Text('${value.toInt()}'),
-                interval: 1,
-              ),
+            // Add a border around the chart.
+            borderData: FlBorderData(
+              show: true,
+              border: Border.all(color: Colors.blue),
             ),
+            // Define the data and appearance of the line.
+            lineBarsData: [
+              LineChartBarData(
+                spots: const [
+                  FlSpot(0, 1),
+                  FlSpot(1, 3),
+                  FlSpot(2, 7),
+                  FlSpot(3, 6),
+                  FlSpot(4, 8),
+                ],
+                isCurved: true, // Makes the line smooth.
+                barWidth: 4, // Thickness of the line.
+                color: Colors.blue, // Color of the line.
+                dotData: FlDotData(show: true), // Show dots on data points.
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Colors.blue
+                      .withOpacity(0.3), // Fills the area under the line.
+                ),
+              ),
+            ],
           ),
-          // Grid lines (Map's grid)
-          gridData: FlGridData(show: true),
-          // The treasure path line
-          lineBarsData: [
-            LineChartBarData(
-              spots: buriedTreasures,
-              isCurved: true,
-              color: Colors.amber,
-              dotData: FlDotData(show: true),
-            ),
-          ],
         ),
       ),
     );
