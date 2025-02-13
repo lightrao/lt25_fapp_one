@@ -20,8 +20,23 @@ class _MyCalendarAlbumState extends State<MyCalendarAlbum> {
     DateTime(2025, 2, 14): ['Event 3'],
   }; // Event stickers collection
 
+  // Helper method to get events matching a day
+  List<String> _getEventsForDay(DateTime day) {
+    final events = _events.entries
+        .where((entry) => isSameDay(entry.key, day))
+        .map((entry) => entry.value)
+        .expand((element) => element)
+        .toList();
+    print('Loading events for $day: $events');
+    return events;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final eventsForSelectedDay = _selectedDay != null
+        ? _getEventsForDay(_selectedDay!)
+        : _getEventsForDay(_focusedDay);
+
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: Text('Memory Calendar Album')),
@@ -49,6 +64,7 @@ class _MyCalendarAlbumState extends State<MyCalendarAlbum> {
               onPageChanged: (focusedDay) {
                 setState(() {
                   _focusedDay = focusedDay;
+                  _selectedDay = focusedDay;
                 });
               },
               selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
@@ -60,20 +76,16 @@ class _MyCalendarAlbumState extends State<MyCalendarAlbum> {
               },
 
               // Add event stickers
-              eventLoader: (day) {
-                print('Loading events for $day');
-                return _events[day] ?? [];
-              },
+              eventLoader: _getEventsForDay,
             ),
 
             // Event Sticker Drawer
             Expanded(
               child: ListView.builder(
-                itemCount: _events[_selectedDay]?.length ?? 0,
+                itemCount: eventsForSelectedDay.length,
                 itemBuilder: (context, index) {
-                  print('Displaying event: ${_events[_selectedDay]![index]}');
                   return ListTile(
-                    title: Text(_events[_selectedDay]![index]),
+                    title: Text(eventsForSelectedDay[index]),
                   );
                 },
               ),
