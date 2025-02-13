@@ -1,94 +1,67 @@
-// main.dart (The Photo Album Workshop)
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:fl_chart/fl_chart.dart';
 
-void main() => runApp(MyCalendarAlbum());
+void main() => runApp(MyApp());
 
-class MyCalendarAlbum extends StatefulWidget {
-  const MyCalendarAlbum({super.key});
-
-  @override
-  _MyCalendarAlbumState createState() => _MyCalendarAlbumState();
-}
-
-class _MyCalendarAlbumState extends State<MyCalendarAlbum> {
-  // Our calendar's current focal point (like a camera lens)
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay; // Currently chosen photo frame
-  final Map<DateTime, List<String>> _events = {
-    DateTime(2025, 2, 13): ['Event 1', 'Event 2'],
-    DateTime(2025, 2, 14): ['Event 3'],
-  }; // Event stickers collection
-
-  // Helper method to get events matching a day
-  List<String> _getEventsForDay(DateTime day) {
-    final events = _events.entries
-        .where((entry) => isSameDay(entry.key, day))
-        .map((entry) => entry.value)
-        .expand((element) => element)
-        .toList();
-    print('Loading events for $day: $events');
-    return events;
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final eventsForSelectedDay = _selectedDay != null
-        ? _getEventsForDay(_selectedDay!)
-        : _getEventsForDay(_focusedDay);
-
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: Text('Memory Calendar Album')),
-        body: Column(
-          children: [
-            // The Album Spread
-            TableCalendar(
-              firstDay: DateTime.utc(2020, 1, 1), // First page
-              lastDay: DateTime.utc(2030, 12, 31), // Last page
-              focusedDay: _focusedDay, // Current visible page
+        appBar: AppBar(title: Text('Treasure Map Chart')),
+        body: TreasureChart(),
+      ),
+    );
+  }
+}
 
-              // Decorate individual photo frames
-              calendarStyle: CalendarStyle(
-                selectedDecoration: BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-                todayDecoration: BoxDecoration(
-                  color: Colors.blue.shade100,
-                  shape: BoxShape.circle,
-                ),
+class TreasureChart extends StatelessWidget {
+  // Our treasure spots (data points)
+  final List<FlSpot> buriedTreasures = [
+    FlSpot(1, 3), // Month 1: 3 gold coins
+    FlSpot(2, 1), // Month 2: 1 gold coin
+    FlSpot(3, 4), // Month 3: 4 gold coins
+    FlSpot(4, 2), // Month 4: 2 gold coins
+    FlSpot(5, 5), // Month 5: 5 gold coins
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      height: 300,
+      child: LineChart(
+        LineChartData(
+          // X Axis (Time Road)
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) =>
+                    Text('Month ${value.toInt()}'),
+                interval: 1,
               ),
-
-              // Handle page turns and frame selections
-              onPageChanged: (focusedDay) {
-                setState(() {
-                  _focusedDay = focusedDay;
-                  _selectedDay = focusedDay;
-                });
-              },
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                });
-              },
-
-              // Add event stickers
-              eventLoader: _getEventsForDay,
             ),
-
-            // Event Sticker Drawer
-            Expanded(
-              child: ListView.builder(
-                itemCount: eventsForSelectedDay.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(eventsForSelectedDay[index]),
-                  );
-                },
+            // Y Axis (Gold Coast)
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) => Text('${value.toInt()}'),
+                interval: 1,
               ),
+            ),
+          ),
+          // Grid lines (Map's grid)
+          gridData: FlGridData(show: true),
+          // The treasure path line
+          lineBarsData: [
+            LineChartBarData(
+              spots: buriedTreasures,
+              isCurved: true,
+              color: Colors.amber,
+              dotData: FlDotData(show: true),
             ),
           ],
         ),
