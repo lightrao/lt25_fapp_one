@@ -1,37 +1,96 @@
 import 'package:flutter/material.dart';
-import 'package:rive/rive.dart';
+import 'package:just_audio/just_audio.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-/// MyApp is the root widget of our application.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // The root widget of the app.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Rive Animation Example',
-      home: const RiveHomePage(),
+      title: 'Just Audio Demo',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const AudioPlayerScreen(),
     );
   }
 }
 
-/// RiveHomePage displays the Rive animation in the center of the screen.
-class RiveHomePage extends StatelessWidget {
-  const RiveHomePage({super.key});
+class AudioPlayerScreen extends StatefulWidget {
+  const AudioPlayerScreen({super.key});
+
+  @override
+  _AudioPlayerScreenState createState() => _AudioPlayerScreenState();
+}
+
+class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
+  // Create an instance of AudioPlayer.
+  final AudioPlayer _player = AudioPlayer();
+  // A sample audio URL (you can use any valid URL).
+  final String audioUrl = 'assets/bell_indian.ogg';
+
+  bool isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load the audio source when the widget initializes.
+    _initAudio();
+  }
+
+  Future<void> _initAudio() async {
+    try {
+      // setUrl returns the duration once loaded (optional).
+      await _player.setUrl(audioUrl);
+    } catch (e) {
+      // Handle load errors here.
+      debugPrint('Error loading audio: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    // Always dispose of the player to free resources.
+    _player.dispose();
+    super.dispose();
+  }
+
+  // Toggles between playing and pausing.
+  void _togglePlayPause() {
+    if (isPlaying) {
+      _player.pause();
+    } else {
+      _player.play();
+    }
+    setState(() {
+      isPlaying = !isPlaying;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Rive Demo')),
+      appBar: AppBar(title: const Text('Just Audio Demo')),
       body: Center(
-        child: RiveAnimation.asset(
-          'assets/scrollbar.riv', // Path to your .riv file
-          fit: BoxFit.contain, // Adjusts the animation to the available space
-          // Optionally, you can control the animation playback:
-          // controllers: [SimpleAnimation('AnimationName')],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text(
+              'Tap the button to play/pause the audio:',
+              style: TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 20),
+            IconButton(
+              iconSize: 64,
+              icon: Icon(isPlaying
+                  ? Icons.pause_circle_filled
+                  : Icons.play_circle_filled),
+              onPressed: _togglePlayPause,
+            ),
+          ],
         ),
       ),
     );
