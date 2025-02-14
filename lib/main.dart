@@ -43,10 +43,9 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
 
   Future<void> _initAudio() async {
     try {
-      // setUrl returns the duration once loaded (optional).
-      await _player.setUrl(audioUrl);
+      // Load the local asset using setAsset.
+      await _player.setAsset(audioUrl);
     } catch (e) {
-      // Handle load errors here.
       debugPrint('Error loading audio: $e');
     }
   }
