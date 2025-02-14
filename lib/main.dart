@@ -1,86 +1,78 @@
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/percent_indicator.dart';
+import 'package:cron/cron.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  // Start the Flutter app.
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // A basic MaterialApp that uses CronExample as the home screen.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Progress Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const ProgressScreen(),
+      title: 'Cron Example',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: CronExample(),
     );
   }
 }
 
-class ProgressScreen extends StatefulWidget {
-  const ProgressScreen({super.key});
+class CronExample extends StatefulWidget {
+  const CronExample({super.key});
 
   @override
-  State<ProgressScreen> createState() => _ProgressScreenState();
+  _CronExampleState createState() => _CronExampleState();
 }
 
-class _ProgressScreenState extends State<ProgressScreen> {
-  double _progress = 0.0;
+class _CronExampleState extends State<CronExample> {
+  // Create an instance of Cron to schedule jobs.
+  final Cron cron = Cron();
+  // List to store messages from our cron job.
+  List<String> logMessages = [];
 
-  void _increaseProgress() {
-    setState(() {
-      _progress += 0.1;
-      if (_progress > 1.0) _progress = 0.0;
+  @override
+  void initState() {
+    super.initState();
+    // Schedule a job that runs every 3 seconds.
+    // The cron expression '*/3 * * * * *' means: every 3 seconds.
+    cron.schedule(Schedule.parse('*/3 * * * * *'), () {
+      // Get the current time.
+      String now = DateTime.now().toLocal().toString();
+      print("Cron Job fired at: $now");
+      // Update the UI by adding a new log message.
+      setState(() {
+        logMessages.add("Cron Job fired at: $now");
+      });
     });
   }
 
   @override
+  void dispose() {
+    // It is important to close the cron instance to cancel scheduled jobs
+    // and free resources when the widget is disposed.
+    cron.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // A simple Scaffold that displays our log messages in a list.
     return Scaffold(
-      appBar: AppBar(title: const Text('Percent Indicator Demo')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Circular Progress Indicator
-            CircularPercentIndicator(
-              radius: 60.0,
-              lineWidth: 20.0,
-              percent: _progress,
-              backgroundColor: Colors.grey,
-              progressColor: Colors.blue,
-              circularStrokeCap: CircularStrokeCap.round,
-              center: Text(
-                '${(_progress * 100).toStringAsFixed(0)}%',
-                style: const TextStyle(fontSize: 20.0),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // Linear Progress Indicator
-            SizedBox(
-              width: 200.0,
-              child: LinearPercentIndicator(
-                lineHeight: 18.0,
-                percent: _progress,
-                backgroundColor: Colors.grey,
-                progressColor: Colors.green,
-                barRadius: const Radius.circular(10),
-                padding: EdgeInsets.zero,
-                center: Text('${(_progress * 100).toStringAsFixed(0)}%'),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // Update Button
-            ElevatedButton(
-              onPressed: _increaseProgress,
-              child: const Text('Add 10% Progress'),
-            ),
-          ],
-        ),
+      appBar: AppBar(
+        title: Text('Cron Example'),
+      ),
+      body: ListView.builder(
+        itemCount: logMessages.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(logMessages[index]),
+          );
+        },
       ),
     );
   }
