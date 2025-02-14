@@ -1,96 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:provider/provider.dart';
+
+// A simple model class that manages an integer counter.
+// It extends ChangeNotifier so that it can notify listeners when changes occur.
+class Counter with ChangeNotifier {
+  int _count = 0; // Private variable to store the counter value.
+
+  // Public getter to access the counter value.
+  int get count => _count;
+
+  // Method to increment the counter.
+  void increment() {
+    _count++; // Increase the counter.
+    notifyListeners(); // Notify all listening widgets to rebuild.
+  }
+}
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    // ChangeNotifierProvider makes the Counter model available to the widget tree.
+    ChangeNotifierProvider(
+      create: (context) => Counter(),
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // The root widget of the app.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Just Audio Demo',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const AudioPlayerScreen(),
+      title: 'Provider Example',
+      home: CounterScreen(),
     );
   }
 }
 
-class AudioPlayerScreen extends StatefulWidget {
-  const AudioPlayerScreen({super.key});
-
-  @override
-  _AudioPlayerScreenState createState() => _AudioPlayerScreenState();
-}
-
-class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
-  // Create an instance of AudioPlayer.
-  final AudioPlayer _player = AudioPlayer();
-  // A sample audio URL (you can use any valid URL).
-  final String audioUrl = 'assets/bell_indian.ogg';
-
-  bool isPlaying = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Load the audio source when the widget initializes.
-    _initAudio();
-  }
-
-  Future<void> _initAudio() async {
-    try {
-      // Load the local asset using setAsset.
-      await _player.setAsset(audioUrl);
-    } catch (e) {
-      debugPrint('Error loading audio: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    // Always dispose of the player to free resources.
-    _player.dispose();
-    super.dispose();
-  }
-
-  // Toggles between playing and pausing.
-  void _togglePlayPause() {
-    if (isPlaying) {
-      _player.pause();
-    } else {
-      _player.play();
-    }
-    setState(() {
-      isPlaying = !isPlaying;
-    });
-  }
+class CounterScreen extends StatelessWidget {
+  const CounterScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Just Audio Demo')),
+      appBar: AppBar(
+        title: Text('Provider Counter Example'),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'Tap the button to play/pause the audio:',
-              style: TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 20),
-            IconButton(
-              iconSize: 64,
-              icon: Icon(isPlaying
-                  ? Icons.pause_circle_filled
-                  : Icons.play_circle_filled),
-              onPressed: _togglePlayPause,
+            Text('You have pushed the button this many times:'),
+            // Consumer listens to the Counter model and rebuilds when notifyListeners() is called.
+            Consumer<Counter>(
+              builder: (consumerCtx, counter, child) {
+                return Text(
+                  '${counter.count}', // Display the current count.
+                  style: Theme.of(consumerCtx).textTheme.headlineMedium,
+                );
+              },
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        // Using Provider.of with listen: false since we don't need a rebuild on button press.
+        onPressed: () {
+          Provider.of<Counter>(context, listen: false).increment();
+        },
+        tooltip: 'Increment',
+        child: Icon(Icons.add),
       ),
     );
   }
