@@ -1,78 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:cron/cron.dart';
+import 'package:rive/rive.dart';
 
 void main() {
-  // Start the Flutter app.
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
+/// MyApp is the root widget of our application.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // A basic MaterialApp that uses CronExample as the home screen.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Cron Example',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: CronExample(),
+      title: 'Rive Animation Example',
+      home: const RiveHomePage(),
     );
   }
 }
 
-class CronExample extends StatefulWidget {
-  const CronExample({super.key});
-
-  @override
-  _CronExampleState createState() => _CronExampleState();
-}
-
-class _CronExampleState extends State<CronExample> {
-  // Create an instance of Cron to schedule jobs.
-  final Cron cron = Cron();
-  // List to store messages from our cron job.
-  List<String> logMessages = [];
-
-  @override
-  void initState() {
-    super.initState();
-    // Schedule a job that runs every 3 seconds.
-    // The cron expression '*/3 * * * * *' means: every 3 seconds.
-    cron.schedule(Schedule.parse('*/3 * * * * *'), () {
-      // Get the current time.
-      String now = DateTime.now().toLocal().toString();
-      print("Cron Job fired at: $now");
-      // Update the UI by adding a new log message.
-      setState(() {
-        logMessages.add("Cron Job fired at: $now");
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    // It is important to close the cron instance to cancel scheduled jobs
-    // and free resources when the widget is disposed.
-    cron.close();
-    super.dispose();
-  }
+/// RiveHomePage displays the Rive animation in the center of the screen.
+class RiveHomePage extends StatelessWidget {
+  const RiveHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // A simple Scaffold that displays our log messages in a list.
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Cron Example'),
-      ),
-      body: ListView.builder(
-        itemCount: logMessages.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(logMessages[index]),
-          );
-        },
+      appBar: AppBar(title: const Text('Rive Demo')),
+      body: Center(
+        child: RiveAnimation.asset(
+          'assets/scrollbar.riv', // Path to your .riv file
+          fit: BoxFit.contain, // Adjusts the animation to the available space
+          // Optionally, you can control the animation playback:
+          // controllers: [SimpleAnimation('AnimationName')],
+        ),
       ),
     );
   }
