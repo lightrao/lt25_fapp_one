@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:vibration/vibration.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'screens/settings_screen.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  // Ensure binding and initialize settings before runApp
+  WidgetsFlutterBinding.ensureInitialized();
+  await Settings.init(cacheProvider: SharePreferenceCache());
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -9,40 +15,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Vibration Example',
-      home: VibrationHome(),
-    );
-  }
-}
-
-class VibrationHome extends StatelessWidget {
-  const VibrationHome({super.key});
-
-  // Function to trigger device vibration
-  Future<void> _vibrateDevice() async {
-    // Check if the device supports vibration
-    if (await Vibration.hasVibrator()) {
-      // Vibrate for 500 milliseconds
-      Vibration.vibrate(duration: 500);
-      print("Device is vibrating.");
-    } else {
-      // If device does not support vibration, print a message to the console
-      print("Device does not support vibration.");
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Vibration Example'),
-      ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: _vibrateDevice,
-          child: Text('Vibrate Device'),
-        ),
-      ),
+      title: 'Flutter Settings Demo',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const SettingsScreenPage(),
     );
   }
 }
