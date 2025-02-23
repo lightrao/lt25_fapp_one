@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 void main() => runApp(MyApp());
 
@@ -8,62 +9,53 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: TrivialAnimationExample(),
+      home: TickerExample(),
     );
   }
 }
 
-class TrivialAnimationExample extends StatefulWidget {
-  const TrivialAnimationExample({super.key});
-
+class TickerExample extends StatefulWidget {
   @override
-  _TrivialAnimationExampleState createState() =>
-      _TrivialAnimationExampleState();
+  _TickerExampleState createState() => _TickerExampleState();
 }
 
-class _TrivialAnimationExampleState extends State<TrivialAnimationExample>
+class _TickerExampleState extends State<TickerExample>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late Ticker _ticker;
+  double _elapsedSeconds = 0.0;
 
   @override
   void initState() {
     super.initState();
-    // Create an AnimationController with a duration of 2 seconds.
-    _controller =
-        AnimationController(vsync: this, duration: Duration(seconds: 2));
-    // Define a Tween animation that goes from 0 (fully transparent) to 1 (fully opaque).
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+    // Create and start the ticker with a callback that updates the elapsed time.
+    _ticker = this.createTicker(_onTick);
+    _ticker.start();
+  }
 
-    // Start the animation to repeatedly animate back and forth.
-    _controller.repeat(reverse: true);
+  // This callback is called every frame with the elapsed time since the ticker started.
+  void _onTick(Duration elapsed) {
+    setState(() {
+      _elapsedSeconds = elapsed.inMilliseconds / 1000.0;
+    });
   }
 
   @override
   void dispose() {
-    // Dispose of the controller to release resources.
-    _controller.dispose();
+    // Dispose the ticker when the widget is disposed to free resources.
+    _ticker.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Trivial Animation Example")),
+      appBar: AppBar(
+        title: Text("Ticker Example"),
+      ),
       body: Center(
-        child: AnimatedBuilder(
-          animation: _animation,
-          builder: (context, child) {
-            // Apply the animation value to the opacity of a blue container.
-            return Opacity(
-              opacity: _animation.value,
-              child: Container(
-                width: 200,
-                height: 200,
-                color: Colors.orange,
-              ),
-            );
-          },
+        child: Text(
+          "Elapsed time: ${_elapsedSeconds.toStringAsFixed(2)} seconds",
+          style: TextStyle(fontSize: 24),
         ),
       ),
     );
