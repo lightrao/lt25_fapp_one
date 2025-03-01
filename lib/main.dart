@@ -1,63 +1,154 @@
+// ignore_for_file: unnecessary_const, avoid_print
+
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:do_not_disturb/do_not_disturb.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(const MaterialApp(home: MyApp()));
+}
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: TickerExample(),
-    );
-  }
+  State<MyApp> createState() => _MyAppState();
 }
 
-class TickerExample extends StatefulWidget {
-  @override
-  _TickerExampleState createState() => _TickerExampleState();
-}
-
-class _TickerExampleState extends State<TickerExample>
-    with SingleTickerProviderStateMixin {
-  late Ticker _ticker;
-  double _elapsedSeconds = 0.0;
+class _MyAppState extends State<MyApp> {
+  final _dndPlugin = DoNotDisturbPlugin();
 
   @override
   void initState() {
     super.initState();
-    // Create and start the ticker with a callback that updates the elapsed time.
-    _ticker = this.createTicker(_onTick);
-    _ticker.start();
   }
 
-  // This callback is called every frame with the elapsed time since the ticker started.
-  void _onTick(Duration elapsed) {
-    setState(() {
-      _elapsedSeconds = elapsed.inMilliseconds / 1000.0;
-    });
-  }
-
-  @override
-  void dispose() {
-    // Dispose the ticker when the widget is disposed to free resources.
-    _ticker.dispose();
-    super.dispose();
-  }
+  bool _isDndEnabled = false;
+  bool _notifPolicyAccess = false;
+  InterruptionFilter _dndStatus = InterruptionFilter.unknown;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Ticker Example"),
+        title: const Text('DND Plugin Demo'),
       ),
       body: Center(
-        child: Text(
-          "Elapsed time: ${_elapsedSeconds.toStringAsFixed(2)} seconds",
-          style: TextStyle(fontSize: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            ElevatedButton(
+              onPressed: _checkDndEnabled,
+              child: const Text('Check if DND is Enabled'),
+            ),
+            const SizedBox(height: 10),
+            Text('DND Enabled: $_isDndEnabled'),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _getDndStatus,
+              child: const Text('Get DND Status'),
+            ),
+            const SizedBox(height: 10),
+            Text('DND Status: ${_dndStatus.toString()}'),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _openDndSettings,
+              child: const Text('Open DND Settings'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _checkNotificationPolicyAccessGranted,
+              child:
+                  const Text('Check if Notification Policy Access is Granted'),
+            ),
+            const SizedBox(height: 10),
+            Text('Notification Policy Access : $_notifPolicyAccess'),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _openNotificationPolicyAccessSettings,
+              child: const Text('Open Notification Policy Access Settings'),
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () async {
+                await _checkNotificationPolicyAccessGranted();
+                await Future.delayed(const Duration(milliseconds: 50));
+                if (!_notifPolicyAccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: const Text(
+                          'Notification Policy Access not granted')));
+                  return;
+                }
+                if (_isDndEnabled) {
+                  _setInterruptionFilter(InterruptionFilter.all);
+                } else {
+                  _setInterruptionFilter(InterruptionFilter.alarms);
+                }
+              },
+              child: const Text('Toggle DND/Zen mode'),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _checkNotificationPolicyAccessGranted() async {
+    try {
+      final bool isNotificationPolicyAccessGranted =
+          await _dndPlugin.isNotificationPolicyAccessGranted();
+      setState(() {
+        _notifPolicyAccess = isNotificationPolicyAccessGranted;
+      });
+    } catch (e) {
+      print('Error checking notification policy access: $e');
+    }
+  }
+
+  Future<void> _checkDndEnabled() async {
+    try {
+      final bool isDndEnabled = await _dndPlugin.isDndEnabled();
+      setState(() {
+        _isDndEnabled = isDndEnabled;
+      });
+    } catch (e) {
+      print('Error checking DND status: $e');
+    }
+  }
+
+  Future<void> _getDndStatus() async {
+    try {
+      final InterruptionFilter status = await _dndPlugin.getDNDStatus();
+      setState(() {
+        _dndStatus = status;
+      });
+    } catch (e) {
+      print('Error getting DND status: $e');
+    }
+  }
+
+  Future<void> _openDndSettings() async {
+    try {
+      await _dndPlugin.openDndSettings();
+    } catch (e) {
+      print('Error opening DND settings: $e');
+    }
+  }
+
+  Future<void> _openNotificationPolicyAccessSettings() async {
+    try {
+      await _dndPlugin.openNotificationPolicyAccessSettings();
+    } catch (e) {
+      print('Error opening notification policy access settings: $e');
+    }
+  }
+
+  Future<void> _setInterruptionFilter(InterruptionFilter filter) async {
+    try {
+      await _dndPlugin.setInterruptionFilter(filter);
+      _checkDndEnabled();
+      _getDndStatus();
+    } catch (e) {
+      print('Error setting interruption filter: $e');
+    }
   }
 }
